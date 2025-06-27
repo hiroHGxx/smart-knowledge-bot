@@ -1,0 +1,29 @@
+{
+  "name": "skb-datastore",
+  "version": "1.0.0",
+  "description": "SmartKnowledgeBot - Data persistence layer with Convex",
+  "main": "index.js",
+  "scripts": {
+    "dev": "convex dev",
+    "build": "convex deploy",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "convex",
+    "database",
+    "vector-search",
+    "knowledge-base"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "convex": "^1.24.8"
+  },
+  "devDependencies": {
+    "@types/node": "^18.17.0",
+    "typescript": "^5.8.0"
+  },
+  "engines": {
+    "node": ">=20.9.0"
+  }
+}
