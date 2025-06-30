@@ -36,7 +36,7 @@
 
 ### 1. Convex HTTP API認証
 **問題**: `Unauthorized` エラー
-**解決**: 
+**解決**:
 - `Authorization: Bearer` → リクエストボディの `adminKey` に変更
 - 開発環境では `dev:` で始まるキーを使用
 
@@ -114,10 +114,10 @@ export const toolName = createTool({
   outputSchema: z.object({ result: z.string() }),
   execute: async ({ context }) => {
     const { param } = context;
-    
+
     // 自己完結型クライアント初期化
     const client = new SomeClient(process.env.API_KEY);
-    
+
     try {
       const result = await client.process(param);
       console.log(`[SUCCESS] ${toolName}: ${result.summary}`);
@@ -168,9 +168,9 @@ const ConvexClient = {
 ### 必須環境変数
 ```bash
 # skb-intelligence/.env
-CONVEX_URL=https://trustworthy-sandpiper-233.convex.cloud
-CONVEX_AUTH_TOKEN=dev:xxxxxxxxxx  # 開発用キー
-GOOGLE_GENERATIVE_AI_API_KEY=AIzaSyC2KqanTjeC14yYshYsgAgcXsrWiDVxTlw
+CONVEX_URL=https://your-project.convex.cloud
+CONVEX_AUTH_TOKEN=dev:your-convex-auth-token  # 開発用キー
+GOOGLE_GENERATIVE_AI_API_KEY=your-google-ai-api-key
 ```
 
 ## 🚀 次回開始手順
@@ -180,7 +180,7 @@ GOOGLE_GENERATIVE_AI_API_KEY=AIzaSyC2KqanTjeC14yYshYsgAgcXsrWiDVxTlw
 # ターミナル1: Convex
 cd skb-datastore && npx convex dev
 
-# ターミナル2: Mastra  
+# ターミナル2: Mastra
 cd skb-intelligence && npx mastra dev --dir src/mastra --env .env
 ```
 

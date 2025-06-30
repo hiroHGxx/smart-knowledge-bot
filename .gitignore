@@ -69,3 +69,38 @@ jspm_packages/
 # Temporary files
 *.tmp
 *.temp
+
+# Security: Sensitive files and patterns
+**/*.env
+**/*.env.*
+!**/*.env.example
+**/*.key
+**/*.pem
+**/*.p12
+**/*.pfx
+**/*.secret
+**/*.secrets
+**/secrets/
+**/keys/
+**/credentials/
+
+# Backup files (may contain sensitive data)
+*.bak
+*.backup
+*.swp
+*.swo
+*~
+
+# IDE/Editor specific (may contain project secrets)
+.vscode/settings.json
+.idea/workspace.xml
+
+# OS specific files
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+
+# Security scanning
+.secrets.baseline

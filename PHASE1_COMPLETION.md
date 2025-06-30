@@ -41,7 +41,7 @@
 ### データベース層 (skb-datastore)
 - **技術**: Convex v1.24.8
 - **機能**: サーバーレスデータベース + ベクトル検索
-- **URL**: https://trustworthy-sandpiper-233.convex.cloud
+- **URL**: https://your-project.convex.cloud
 
 ### AIエージェント層 (skb-intelligence)
 - **技術**: Mastra v0.10.8 + Google Gemini 1.5 Pro
