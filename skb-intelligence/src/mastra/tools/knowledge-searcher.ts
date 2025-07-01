@@ -69,7 +69,7 @@ export const answerQuestionFromDocs = createTool({
       const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro-latest' });
 
       const translationPrompt = `
-Please translate the following Japanese question to English. 
+Please translate the following Japanese question to English.
 Provide only the English translation, no additional text or explanation.
 
 Japanese question: ${question}
@@ -77,7 +77,7 @@ Japanese question: ${question}
 
       const translationResult = await model.generateContent(translationPrompt);
       const translatedQuestion = translationResult.response.text().trim();
-      
+
       console.log(`[INFO] answer_question_from_docs: Translated question: "${translatedQuestion}"`);
       processingSteps.push(`Translated question: "${translatedQuestion}"`);
 
@@ -91,7 +91,7 @@ Japanese question: ${question}
       });
 
       const questionEmbedding = await embeddings.embedQuery(translatedQuestion);
-      
+
       if (questionEmbedding.length !== 768) {
         throw new Error(`Invalid embedding dimension: ${questionEmbedding.length}, expected 768`);
       }
@@ -141,7 +141,7 @@ Japanese question: ${question}
       processingSteps.push('Step 4: Answer generation using retrieved context');
 
       const context = searchResults
-        .map((result, index) => 
+        .map((result, index) =>
           `[Document ${index + 1}] (Source: ${result.sourceUrl}, Score: ${result.score.toFixed(3)})\n${result.text}`
         )
         .join('\n\n');
@@ -184,7 +184,7 @@ ${context}
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
       console.error(`[ERROR] answer_question_from_docs: ${errorMsg}`);
-      
+
       processingSteps.push(`Error: ${errorMsg}`);
 
       return {

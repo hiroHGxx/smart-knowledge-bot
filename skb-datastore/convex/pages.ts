@@ -10,7 +10,7 @@ export const addPage = mutation({
   },
   handler: async (ctx, args) => {
     const now = Date.now();
-    
+
     return await ctx.db.insert("crawled_pages", {
       url: args.url,
       text: args.text,

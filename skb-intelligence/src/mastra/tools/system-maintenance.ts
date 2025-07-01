@@ -82,40 +82,40 @@ export const purgeKnowledgeBase = createTool({
       console.log('[INFO] purge_knowledge_base: Purging documents...');
       let deletedDocuments = 0;
       let documentsCursor = null;
-      
+
       do {
-        const documentsResult = await ConvexClient.mutation('admin:purgeDocumentsBatch', { 
-          cursor: documentsCursor 
+        const documentsResult = await ConvexClient.mutation('admin:purgeDocumentsBatch', {
+          cursor: documentsCursor
         });
         const actualDocsResult = documentsResult?.status === 'success' ? documentsResult.value : documentsResult;
-        
+
         deletedDocuments += actualDocsResult?.deletedDocuments || 0;
         documentsCursor = actualDocsResult?.continueCursor;
-        
+
         console.log(`[INFO] purge_knowledge_base: Deleted ${actualDocsResult?.deletedDocuments || 0} documents in this batch`);
-        
+
         if (actualDocsResult?.isDone) break;
       } while (documentsCursor);
-      
+
       // 2. ページ削除（バッチ処理）
       console.log('[INFO] purge_knowledge_base: Purging pages...');
       let deletedPages = 0;
       let pagesCursor = null;
-      
+
       do {
-        const pagesResult = await ConvexClient.mutation('admin:purgePagesBatch', { 
-          cursor: pagesCursor 
+        const pagesResult = await ConvexClient.mutation('admin:purgePagesBatch', {
+          cursor: pagesCursor
         });
         const actualPagesResult = pagesResult?.status === 'success' ? pagesResult.value : pagesResult;
-        
+
         deletedPages += actualPagesResult?.deletedPages || 0;
         pagesCursor = actualPagesResult?.continueCursor;
-        
+
         console.log(`[INFO] purge_knowledge_base: Deleted ${actualPagesResult?.deletedPages || 0} pages in this batch`);
-        
+
         if (actualPagesResult?.isDone) break;
       } while (pagesCursor);
-      
+
       console.log(`[SUCCESS] purge_knowledge_base: Deleted ${deletedPages} pages and ${deletedDocuments} documents`);
 
       return {
@@ -129,7 +129,7 @@ export const purgeKnowledgeBase = createTool({
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
       console.error(`[ERROR] purge_knowledge_base: ${errorMsg}`);
-      
+
       return {
         success: false,
         deletedPages: 0,
@@ -167,11 +167,11 @@ export const getSystemStats = createTool({
     try {
       // Convexのadmin:getStats queryを呼び出し
       const stats = await ConvexClient.query('admin:getStats');
-      
+
       // 安全にstatsにアクセス
       const pagesTotal = stats?.pages?.total || 0;
       const documentsTotal = stats?.documents?.total || 0;
-      
+
       console.log(`[SUCCESS] get_system_stats: Retrieved stats - Pages: ${pagesTotal}, Documents: ${documentsTotal}`);
 
       return {
@@ -183,7 +183,7 @@ export const getSystemStats = createTool({
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
       console.error(`[ERROR] get_system_stats: ${errorMsg}`);
-      
+
       return {
         success: false,
         message: `Failed to retrieve system statistics: ${errorMsg}`,
@@ -221,7 +221,7 @@ export const healthCheck = createTool({
       // 環境変数チェック
       const requiredEnvVars = ['CONVEX_URL', 'GOOGLE_GENERATIVE_AI_API_KEY'];
       const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
-      
+
       if (missingVars.length === 0) {
         checks.environmentVars = true;
         details.push('✅ All required environment variables are set');
@@ -233,11 +233,11 @@ export const healthCheck = createTool({
       try {
         const stats = await ConvexClient.query('admin:getStats');
         checks.convexConnection = true;
-        
+
         // 安全にstatsにアクセス
         const pagesTotal = stats?.pages?.total || 0;
         const documentsTotal = stats?.documents?.total || 0;
-        
+
         details.push(`✅ Convex database connected (${pagesTotal} pages, ${documentsTotal} documents)`);
       } catch (error) {
         details.push(`❌ Convex connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -252,8 +252,8 @@ export const healthCheck = createTool({
       }
 
       const allHealthy = Object.values(checks).every(check => check);
-      const message = allHealthy 
-        ? 'All system components are healthy' 
+      const message = allHealthy
+        ? 'All system components are healthy'
         : 'Some system components have issues';
 
       console.log(`[${allHealthy ? 'SUCCESS' : 'WARN'}] health_check: ${message}`);
@@ -268,7 +268,7 @@ export const healthCheck = createTool({
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
       console.error(`[ERROR] health_check: ${errorMsg}`);
-      
+
       return {
         success: false,
         checks,

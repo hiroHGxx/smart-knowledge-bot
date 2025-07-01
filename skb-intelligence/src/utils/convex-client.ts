@@ -10,7 +10,7 @@ export class ConvexClient {
   constructor(convexUrl?: string, authToken?: string) {
     this.baseUrl = convexUrl || process.env.CONVEX_URL || '';
     this.authToken = authToken || process.env.CONVEX_AUTH_TOKEN;
-    
+
     if (!this.baseUrl) {
       throw new Error('CONVEX_URL is required');
     }
@@ -21,7 +21,7 @@ export class ConvexClient {
    */
   async query(functionName: string, args: any = {}) {
     const url = `${this.baseUrl}/api/query`;
-    
+
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -48,7 +48,7 @@ export class ConvexClient {
    */
   async mutation(functionName: string, args: any = {}) {
     const url = `${this.baseUrl}/api/mutation`;
-    
+
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -78,10 +78,10 @@ export class ConvexClient {
       await this.query('admin:getStats');
       return { status: 'ok', timestamp: Date.now() };
     } catch (error) {
-      return { 
-        status: 'error', 
+      return {
+        status: 'error',
         error: error instanceof Error ? error.message : 'Unknown error',
-        timestamp: Date.now() 
+        timestamp: Date.now()
       };
     }
   }

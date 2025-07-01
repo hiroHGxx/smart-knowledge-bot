@@ -10,14 +10,14 @@ export const searchByEmbedding = action({
   },
   handler: async (ctx, args): Promise<any[]> => {
     const limit = Math.min(args.limit || 5, 256); // Convex制限: 最大256件
-    
+
     try {
       // Convex v1.24.8の正しいベクトル検索API
       const vectorResults = await ctx.vectorSearch("documents", "by_embedding", {
         vector: args.embedding,
         limit: limit,
       });
-      
+
       // 各結果のドキュメント詳細を取得（Query経由）
       const documents: any[] = [];
       for (const result of vectorResults) {
@@ -32,12 +32,12 @@ export const searchByEmbedding = action({
           });
         }
       }
-      
+
       return documents;
-      
+
     } catch (error) {
       console.error(`[ERROR] searchByEmbedding: ${error}`);
-      
+
       // フォールバック: 通常のクエリで最新文書を返す
       const fallbackResults = await ctx.runQuery(api.search.getFallbackDocuments, { limit });
       return fallbackResults;
@@ -54,13 +54,13 @@ export const searchByText = query({
   handler: async (ctx, args) => {
     const limit = args.limit || 10;
     const searchText = args.searchText.toLowerCase();
-    
+
     const allDocs = await ctx.db.query("documents").collect();
-    
+
     const matchingDocs = allDocs
       .filter(doc => doc.text.toLowerCase().includes(searchText))
       .slice(0, limit);
-    
+
     return matchingDocs.map(doc => ({
       id: doc._id,
       text: doc.text,
@@ -86,7 +86,7 @@ export const getFallbackDocuments = query({
       .query("documents")
       .order("desc")
       .take(args.limit);
-    
+
     return results.map((doc) => ({
       id: doc._id,
       text: doc.text,
@@ -96,4 +96,3 @@ export const getFallbackDocuments = query({
     }));
   },
 });
-

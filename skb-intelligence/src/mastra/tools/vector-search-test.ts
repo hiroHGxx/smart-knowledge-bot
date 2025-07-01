@@ -122,7 +122,7 @@ export const insertTestDocument = createTool({
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
       console.error(`[ERROR] insert_test_document: ${errorMsg}`);
-      
+
       return {
         success: false,
         message: `Failed to insert test document: ${errorMsg}`,
@@ -162,7 +162,7 @@ export const checkDocumentCount = createTool({
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
       console.error(`[ERROR] check_document_count: ${errorMsg}`);
-      
+
       return {
         success: false,
         message: `Failed to check document count: ${errorMsg}`,
@@ -231,7 +231,7 @@ export const testVectorSearch = createTool({
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
       console.error(`[ERROR] test_vector_search: ${errorMsg}`);
-      
+
       return {
         success: false,
         message: `Vector search test failed: ${errorMsg}`,

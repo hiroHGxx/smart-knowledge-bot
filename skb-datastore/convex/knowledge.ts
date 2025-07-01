@@ -29,7 +29,7 @@ export const addDocuments = mutation({
   },
   handler: async (ctx, args) => {
     const results = [];
-    
+
     for (const doc of args.documents) {
       const id = await ctx.db.insert("documents", {
         text: doc.text,
@@ -39,7 +39,7 @@ export const addDocuments = mutation({
       });
       results.push(id);
     }
-    
+
     return results;
   },
 });

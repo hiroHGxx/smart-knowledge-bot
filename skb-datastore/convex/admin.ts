@@ -8,14 +8,14 @@ export const getStats = query({
       ctx.db.query("crawled_pages").collect(),
       ctx.db.query("documents").collect(),
     ]);
-    
+
     const pageStats = {
       total: pages.length,
       pending: pages.filter(p => p.status === "pending").length,
       processed: pages.filter(p => p.status === "processed").length,
       error: pages.filter(p => p.status === "error").length,
     };
-    
+
     return {
       pages: pageStats,
       documents: {
@@ -30,17 +30,17 @@ export const getStats = query({
 export const purgeDocumentsBatch = mutation({
   args: { cursor: v.union(v.string(), v.null()) },
   handler: async (ctx, args) => {
-    const documents = await ctx.db.query("documents").paginate({ 
+    const documents = await ctx.db.query("documents").paginate({
       numItems: 100,
       cursor: args.cursor
     });
-    
+
     let deletedDocuments = 0;
     for (const doc of documents.page) {
       await ctx.db.delete(doc._id);
       deletedDocuments++;
     }
-    
+
     return {
       deletedDocuments,
       continueCursor: documents.continueCursor,
@@ -54,17 +54,17 @@ export const purgeDocumentsBatch = mutation({
 export const purgePagesBatch = mutation({
   args: { cursor: v.union(v.string(), v.null()) },
   handler: async (ctx, args) => {
-    const pages = await ctx.db.query("crawled_pages").paginate({ 
+    const pages = await ctx.db.query("crawled_pages").paginate({
       numItems: 100,
       cursor: args.cursor
     });
-    
+
     let deletedPages = 0;
     for (const page of pages.page) {
       await ctx.db.delete(page._id);
       deletedPages++;
     }
-    
+
     return {
       deletedPages,
       continueCursor: pages.continueCursor,
@@ -95,21 +95,21 @@ export const purgeBySourceUrl = mutation({
       .query("documents")
       .withIndex("by_source_url", (q) => q.eq("sourceUrl", args.sourceUrl))
       .collect();
-    
+
     for (const doc of documents) {
       await ctx.db.delete(doc._id);
     }
-    
+
     // ページを削除
     const page = await ctx.db
       .query("crawled_pages")
       .withIndex("by_url", (q) => q.eq("url", args.sourceUrl))
       .first();
-    
+
     if (page) {
       await ctx.db.delete(page._id);
     }
-    
+
     return {
       deletedDocuments: documents.length,
       deletedPage: page ? 1 : 0,

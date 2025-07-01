@@ -100,30 +100,30 @@ export const webCrawler = createTool({
         headless: true,
         args: ['--no-sandbox', '--disable-setuid-sandbox']
       });
-      
+
       const context = await browser.newContext({
         userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
       });
-      
+
       const page = await context.newPage();
-      
+
       // 単一ページクロール
       if (maxDepth === 0) {
         console.log(`[INFO] web_crawler: Single page crawl mode for ${startUrl}`);
-        
+
         try {
           // ページにアクセス
           await page.goto(startUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
-          
+
           // テキスト抽出
           const extractedText = await page.evaluate((sel) => {
             const targetElement = sel ? document.querySelector(sel) : document.body;
             if (!targetElement) return '';
-            
+
             // スクリプトとスタイルタグを除去
             const scripts = targetElement.querySelectorAll('script, style');
             scripts.forEach(el => el.remove());
-            
+
             // テキストを取得してクリーンアップ
             return targetElement.textContent
               ?.replace(/\s+/g, ' ')
@@ -136,7 +136,7 @@ export const webCrawler = createTool({
 
           // Convexデータベースに保存
           console.log(`[INFO] web_crawler: Saving page ${startUrl} (${extractedText.length} chars)`);
-          
+
           const savedId = await ConvexClient.mutation('pages:addPage', {
             url: startUrl,
             text: extractedText,
@@ -160,50 +160,50 @@ export const webCrawler = createTool({
       } else {
         // 再帰クロール実装
         console.log(`[INFO] web_crawler: Starting recursive crawl (depth: ${maxDepth})`);
-        
+
         const visited = new Set<string>();
         const urlsToProcess = [{ url: startUrl, depth: 0 }];
-        
+
         // バッチ処理設定
         const BATCH_SIZE = 5; // 5ページずつ処理
         const MAX_PAGES = 50; // 最大50ページに制限
         let processedCount = 0;
         let shouldStop = false;
-        
+
         while (urlsToProcess.length > 0 && savedPages.length < MAX_PAGES && !shouldStop) {
           const batch = urlsToProcess.splice(0, BATCH_SIZE);
-          
+
           for (const { url, depth } of batch) {
             // 既に訪問済みまたは最大深度を超えた場合はスキップ
             if (visited.has(url) || depth > maxDepth || savedPages.length >= MAX_PAGES) {
               continue;
             }
-            
+
             // フラグメントURL（#付き）をスキップ
             if (url.includes('#')) {
               console.log(`[INFO] web_crawler: Skipping fragment URL ${url}`);
               continue;
             }
-            
+
             visited.add(url);
             console.log(`[INFO] web_crawler: Processing ${url} (depth: ${depth}, saved: ${savedPages.length}/${MAX_PAGES})`);
-            
+
             try {
               // 新しいページコンテキストを作成（メモリリーク防止）
               const newPage = await context.newPage();
-              
+
               // ページにアクセス
               await newPage.goto(url, { waitUntil: 'domcontentloaded', timeout: 20000 });
-            
+
               // テキスト抽出
               const extractedText = await newPage.evaluate((sel?: string) => {
                 const targetElement = sel ? document.querySelector(sel) : document.body;
                 if (!targetElement) return '';
-                
+
                 // スクリプトとスタイルタグを除去
                 const scripts = targetElement.querySelectorAll('script, style');
                 scripts.forEach((el: Element) => el.remove());
-                
+
                 // テキストを取得してクリーンアップ
                 return targetElement.textContent
                   ?.replace(/\s+/g, ' ')
@@ -215,13 +215,13 @@ export const webCrawler = createTool({
                 try {
                   const existingPageResult = await ConvexClient.query('pages:getPageByUrl', { url: url });
                   const existingPage = existingPageResult?.value;
-                  
+
                   if (existingPage !== null && existingPage !== undefined) {
                     console.log(`[INFO] web_crawler: URL ${url} already exists in database, skipping save`);
                   } else {
                     // Convexデータベースに保存
                     console.log(`[INFO] web_crawler: Saving page ${url} (${extractedText.length} chars)`);
-                    
+
                     const savedId = await ConvexClient.mutation('pages:addPage', {
                       url: url,
                       text: extractedText,
@@ -235,7 +235,7 @@ export const webCrawler = createTool({
                     });
 
                     console.log(`[SUCCESS] web_crawler: Saved page ${url} with ID ${JSON.stringify(savedId)}`);
-                    
+
                     // 保存成功時のみカウント更新、制限チェック
                     if (savedPages.length >= MAX_PAGES) {
                       console.log(`[INFO] web_crawler: Reached MAX_PAGES limit (${MAX_PAGES}), stopping crawl`);
@@ -259,7 +259,7 @@ export const webCrawler = createTool({
                   });
 
                   console.log(`[SUCCESS] web_crawler: Saved page ${url} with ID ${JSON.stringify(savedId)} (check failed)`);
-                  
+
                   // 保存成功時のみカウント更新、制限チェック
                   if (savedPages.length >= MAX_PAGES) {
                     console.log(`[INFO] web_crawler: Reached MAX_PAGES limit (${MAX_PAGES}), stopping crawl`);
@@ -268,23 +268,23 @@ export const webCrawler = createTool({
                   }
                 }
               }
-              
+
               // 次の深度のリンクを抽出（最大深度に達していない場合）
               if (depth < maxDepth && savedPages.length < MAX_PAGES && !shouldStop) {
                 const links = await newPage.evaluate((baseUrl: string) => {
                   const links = Array.from(document.querySelectorAll('a[href]'));
                   const baseHost = new URL(baseUrl).host;
-                  
+
                   return links
                     .map((link: Element) => {
                       const href = link.getAttribute('href');
                       if (!href || href.includes('#')) return null; // フラグメントURLを除外
-                      
+
                       try {
                         // 相対URLを絶対URLに変換
                         const absoluteUrl = new URL(href, baseUrl).href;
                         const linkHost = new URL(absoluteUrl).host;
-                        
+
                         // 同一ドメインのみ
                         if (linkHost === baseHost) {
                           return absoluteUrl;
@@ -296,35 +296,35 @@ export const webCrawler = createTool({
                     })
                     .filter((link): link is string => link !== null);
                 }, url);
-                
+
                 // 新しいリンクを処理キューに追加（重複を避ける）
                 for (const link of links) {
                   if (!visited.has(link) && !link.includes('#')) {
                     urlsToProcess.push({ url: link, depth: depth + 1 });
                   }
                 }
-                
+
                 console.log(`[INFO] web_crawler: Found ${links.length} new links from ${url}`);
               }
-              
+
               // ページを閉じてメモリを解放
               await newPage.close();
-              
+
             } catch (error) {
               const errorMsg = error instanceof Error ? error.message : 'Unknown error';
               errors.push(`Failed to crawl ${url}: ${errorMsg}`);
               console.error(`[ERROR] web_crawler: Failed to crawl ${url}: ${errorMsg}`);
             }
-            
+
             // 負荷軽減のため少し待機
             await new Promise(resolve => setTimeout(resolve, 2000));
-            
+
             // 制限に達した場合はバッチ処理も停止
             if (shouldStop) {
               break;
             }
           }
-          
+
           // バッチ間でより長い待機
           if (urlsToProcess.length > 0 && !shouldStop) {
             console.log(`[INFO] web_crawler: Batch completed, waiting before next batch...`);
@@ -336,7 +336,7 @@ export const webCrawler = createTool({
       await browser.close();
 
       const success = savedPages.length > 0 && errors.length === 0;
-      const message = success 
+      const message = success
         ? `Successfully crawled ${savedPages.length} page(s) from ${startUrl}`
         : `Crawling failed or completed with errors. ${savedPages.length} pages saved, ${errors.length} errors`;
 
@@ -356,10 +356,10 @@ export const webCrawler = createTool({
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
       console.error(`[ERROR] web_crawler: ${errorMsg}`);
-      
+
       // エラー時もフラグリセット
       isRunning = false;
-      
+
       if (browser) {
         await browser.close();
       }
@@ -374,4 +374,3 @@ export const webCrawler = createTool({
     }
   },
 });
-

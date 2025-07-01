@@ -75,21 +75,21 @@ export const exportDatabaseToCSV = createTool({
       console.log('[INFO] export_database_to_csv: Fetching crawled_pages data');
       const pagesResult = await ConvexClient.query('pages:getAllPages');
       const pages = pagesResult?.value || pagesResult || [];
-      
+
       console.log(`[INFO] export_database_to_csv: Found ${pages.length} crawled pages`);
 
       // 2. documentsデータを取得
       console.log('[INFO] export_database_to_csv: Fetching documents data');
       const documentsResult = await ConvexClient.query('knowledge:getAllDocuments');
       const documents = documentsResult?.value || documentsResult || [];
-      
+
       console.log(`[INFO] export_database_to_csv: Found ${documents.length} documents`);
 
       // 3. crawled_pagesをCSVエクスポート
       if (pages.length > 0) {
         const pagesFilename = `crawled_pages_${timestamp}.csv`;
         const pagesFilePath = path.join(outputDir, pagesFilename);
-        
+
         let csvContent = 'ID,URL,TextLength,Status,CreatedAt,UpdatedAt';
         if (includeFullText) {
           csvContent += ',FullText';
@@ -100,14 +100,14 @@ export const exportDatabaseToCSV = createTool({
           const textLength = page.text ? page.text.length : 0;
           const createdAt = page.createdAt ? new Date(page.createdAt).toISOString() : '';
           const updatedAt = page.updatedAt ? new Date(page.updatedAt).toISOString() : '';
-          
+
           let row = `"${page._id}","${page.url}",${textLength},"${page.status}","${createdAt}","${updatedAt}"`;
-          
+
           if (includeFullText) {
             const cleanText = page.text ? page.text.replace(/"/g, '""').replace(/\n/g, '\\n') : '';
             row += `,"${cleanText}"`;
           }
-          
+
           csvContent += row + '\n';
         }
 
@@ -125,7 +125,7 @@ export const exportDatabaseToCSV = createTool({
       if (documents.length > 0) {
         const docsFilename = `documents_${timestamp}.csv`;
         const docsFilePath = path.join(outputDir, docsFilename);
-        
+
         let csvContent = 'ID,SourceURL,TextLength,EmbeddingDimensions,CreatedAt';
         if (includeFullText) {
           csvContent += ',FullText';
@@ -136,14 +136,14 @@ export const exportDatabaseToCSV = createTool({
           const textLength = doc.text ? doc.text.length : 0;
           const embeddingDims = doc.embedding ? doc.embedding.length : 0;
           const createdAt = doc.createdAt ? new Date(doc.createdAt).toISOString() : '';
-          
+
           let row = `"${doc._id}","${doc.sourceUrl}",${textLength},${embeddingDims},"${createdAt}"`;
-          
+
           if (includeFullText) {
             const cleanText = doc.text ? doc.text.replace(/"/g, '""').replace(/\n/g, '\\n') : '';
             row += `,"${cleanText}"`;
           }
-          
+
           csvContent += row + '\n';
         }
 
@@ -177,28 +177,28 @@ export const exportDatabaseToCSV = createTool({
       // 6. 分析結果をテキストファイルに出力
       const analysisFilename = `analysis_${timestamp}.txt`;
       const analysisFilePath = path.join(outputDir, analysisFilename);
-      
+
       let analysisContent = `SmartKnowledgeBot Database Analysis Report\n`;
       analysisContent += `Generated: ${new Date().toISOString()}\n\n`;
-      
+
       analysisContent += `CRAWLED PAGES ANALYSIS:\n`;
       analysisContent += `- Total records: ${analysis.crawledPages.total}\n`;
       analysisContent += `- Unique URLs: ${analysis.crawledPages.uniqueUrls}\n`;
       analysisContent += `- Duplicate URLs: ${analysis.crawledPages.duplicates}\n`;
       analysisContent += `- Status breakdown:\n`;
-      
+
       for (const [status, count] of Object.entries(analysis.crawledPages.statusBreakdown)) {
         analysisContent += `  - ${status}: ${count}\n`;
       }
-      
+
       analysisContent += `\nDOCUMENTS ANALYSIS:\n`;
       analysisContent += `- Total records: ${analysis.documents.total}\n`;
       analysisContent += `- Unique source URLs: ${analysis.documents.uniqueSourceUrls}\n`;
-      
+
       if (analysis.crawledPages.duplicates > 0) {
         analysisContent += `\n⚠️  WARNING: Found ${analysis.crawledPages.duplicates} duplicate URLs in crawled_pages\n`;
       }
-      
+
       if (analysis.crawledPages.total > 50) {
         analysisContent += `\n⚠️  WARNING: Found ${analysis.crawledPages.total} pages, but crawler is limited to 50 pages\n`;
       }
@@ -217,7 +217,7 @@ export const exportDatabaseToCSV = createTool({
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
       console.error(`[ERROR] export_database_to_csv: ${errorMsg}`);
-      
+
       return {
         success: false,
         files: [],

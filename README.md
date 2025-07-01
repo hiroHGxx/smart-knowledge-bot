@@ -19,7 +19,7 @@ smart-knowledge-bot/
 ├── skb-intelligence/    # AIエージェント層
 │   ├── src/mastra/     # Mastraベースのエージェント実装
 │   └── tests/          # テストコード
-├── skb-datastore/      # データ永続化層  
+├── skb-datastore/      # データ永続化層
 │   ├── convex/         # Convexデータベース設定
 │   └── tests/          # テストコード
 └── deployment/         # デプロイ設定
@@ -94,7 +94,7 @@ smart-knowledge-bot/
 # 単体テスト
 npm run test
 
-# 統合テスト  
+# 統合テスト
 npm run test:integration
 
 # E2Eテスト

@@ -2,7 +2,7 @@
 
 ## 🎉 SmartKnowledgeBot 実装完了
 
-**実装期間**: 2025-06-28  
+**実装期間**: 2025-06-28
 **実装内容**: RAGパイプライン + エージェント統合 + 実サイト動作確認
 
 ## ✅ 完了した全機能
@@ -59,7 +59,7 @@
 ## 🔧 解決した技術課題
 
 ### 1. Playwright実装課題
-**問題**: `page.setUserAgent is not a function`  
+**問題**: `page.setUserAgent is not a function`
 **解決**: `browser.newContext({ userAgent })`に変更
 ```typescript
 const context = await browser.newContext({
@@ -69,7 +69,7 @@ const page = await context.newPage();
 ```
 
 ### 2. Mastraエージェントツール統合エラー
-**問題**: `Cannot use 'in' operator to search for 'parameters' in answerQuestionFromDocs`  
+**問題**: `Cannot use 'in' operator to search for 'parameters' in answerQuestionFromDocs`
 **解決**: エージェント設定からtools削除、個別ツール使用に変更
 ```typescript
 // ❌ エラーの原因
@@ -80,7 +80,7 @@ tools: ['answerQuestionFromDocs', 'simpleSearch']
 ```
 
 ### 3. ベクトル検索スコア閾値調整
-**問題**: 抽象的質問（「この文書について」）でスコア0.7未達  
+**問題**: 抽象的質問（「この文書について」）でスコア0.7未達
 **解決**: 具体的キーワード使用推奨
 - ❌ 抽象的: 「このサイトについて教えて」
 - ✅ 具体的: 「Ragnarok Landverse Genesisについて教えて」
@@ -194,5 +194,5 @@ tools: ['answerQuestionFromDocs', 'simpleSearch']
 
 ---
 
-*完了日時: 2025-06-28*  
+*完了日時: 2025-06-28*
 *次回再開予定: Phase 3追加テスト（全ページクロール実証）から開始*

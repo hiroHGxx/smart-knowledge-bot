@@ -144,14 +144,14 @@ export const processPendingDocuments = createTool({
 
           // 各チャンクをベクトル化
           const documents: Array<{text: string; embedding: number[]; sourceUrl: string}> = [];
-          
+
           for (let i = 0; i < chunks.length; i++) {
             const chunk = chunks[i];
             console.log(`[INFO] process_pending_documents: Embedding chunk ${i + 1}/${chunks.length} for ${page.url}`);
-            
+
             try {
               const embeddingVector = await embeddings.embedQuery(chunk);
-              
+
               // 768次元チェック
               if (embeddingVector.length !== 768) {
                 throw new Error(`Invalid embedding dimension: ${embeddingVector.length}, expected 768`);
@@ -184,7 +184,7 @@ export const processPendingDocuments = createTool({
           // 5. Convexにドキュメントを一括保存
           console.log(`[INFO] process_pending_documents: Saving ${documents.length} documents for ${page.url}`);
           const saveResult = await ConvexClient.mutation('knowledge:addDocuments', { documents });
-          
+
           savedDocuments += documents.length;
           totalChunks += chunks.length;
 
@@ -195,7 +195,7 @@ export const processPendingDocuments = createTool({
           });
 
           console.log(`[SUCCESS] process_pending_documents: Processed ${page.url} - ${documents.length} documents saved`);
-          
+
           processingDetails.push({
             pageId: page._id,
             url: page.url,
@@ -207,7 +207,7 @@ export const processPendingDocuments = createTool({
           const errorMsg = pageError instanceof Error ? pageError.message : 'Unknown page processing error';
           console.error(`[ERROR] process_pending_documents: Failed to process page ${page.url}: ${errorMsg}`);
           errors.push(`Failed to process page ${page.url}: ${errorMsg}`);
-          
+
           processingDetails.push({
             pageId: page._id,
             url: page.url,

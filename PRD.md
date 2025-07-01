@@ -21,16 +21,16 @@
 
 ### 1.5. 最終形態・デプロイ戦略
 1. **開発フェーズ**: Mastraプレイグラウンドでの機能検証 ✅ **完了 (2025-06-28)**
-2. **本番フェーズ**: 
+2. **本番フェーズ**:
    - Vercel/Netlifyでのフロントエンドデプロイ
    - Next.js + Mastra統合によるWebアプリ化
    - REST API提供によるサードパーティ統合対応
 
 ### 1.6. 実装完了状況 (2025-06-30更新)
-✅ **MVP完成**: 全コア機能実装・動作確認完了  
-✅ **Phase 2**: RAGパイプライン完全実装  
-✅ **Phase 3**: エージェント統合・実サイト検証完了  
-✅ **Phase 3.5**: 重複実行問題解決・本格運用検証完了  
+✅ **MVP完成**: 全コア機能実装・動作確認完了
+✅ **Phase 2**: RAGパイプライン完全実装
+✅ **Phase 3**: エージェント統合・実サイト検証完了
+✅ **Phase 3.5**: 重複実行問題解決・本格運用検証完了
 ⏳ **Phase 4**: 本番化準備（Next.js統合）
 
 **実証済みサイト**: guide.rolg.maxion.gg（50ページ→386ドキュメント）
@@ -41,7 +41,7 @@
 
 ### 2.1. skb-intelligence（AIエージェント層）
 - **役割**: ユーザー対話、RAGパイプライン、Web情報収集
-- **技術スタック**: 
+- **技術スタック**:
   - Mastra v0.10.5（エージェントフレームワーク）
   - Google Generative AI（Gemini 1.5 Pro、embedding-001）
   - LangChain（テキスト分割・処理）
@@ -389,7 +389,7 @@ describe('RAG Pipeline', () => {
     await dataMaintenance.purgeAll();
     await webCrawler.execute({ context: { startUrl, maxDepth: 1 } });
     await documentProcessor.execute();
-    
+
     // 2. 質問・回答
     const answer = await knowledgeSearcher.execute({
       context: { question: '○○について教えて' }
@@ -445,10 +445,10 @@ export const toolName = createTool({
   outputSchema: z.object({ result: z.string() }),
   execute: async ({ context }) => {  // contextパターン必須
     const { param } = context;       // パラメータ取得
-    
+
     // 自己完結型クライアント初期化
     const client = new SomeClient(process.env.API_KEY);
-    
+
     try {
       // メイン処理
       const result = await client.process(param);

@@ -8,7 +8,7 @@
 - データベース初期化機能
 - ヘルスチェック機能
 
-### 2. web-crawler.ts  
+### 2. web-crawler.ts
 - Webページクロール機能
 - 再帰クロール機能
 - エラーハンドリング・リトライ機構
@@ -43,10 +43,10 @@ export const toolName = createTool({
   outputSchema: z.object({ result: z.string() }),
   execute: async ({ context }) => {
     const { param } = context;
-    
+
     // 自己完結型クライアント初期化
     const client = new SomeClient(process.env.API_KEY);
-    
+
     try {
       // メイン処理
       const result = await client.process(param);

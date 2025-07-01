@@ -57,7 +57,7 @@ export const debugGetPageByUrl = createTool({
     try {
       // 1. getPageByUrlクエリを実行
       const queryResult = await ConvexClient.query('pages:getPageByUrl', { url: testUrl });
-      
+
       console.log(`[INFO] debug_get_page_by_url: Raw query result:`, JSON.stringify(queryResult, null, 2));
 
       // 2. 詳細分析
@@ -65,7 +65,7 @@ export const debugGetPageByUrl = createTool({
       const isNullish = queryResult == null;
       const isTruthy = !!queryResult;
       const jsonString = JSON.stringify(queryResult);
-      
+
       // 3. さらに詳細な分析
       const detailedAnalysis = {
         raw: queryResult,
@@ -96,7 +96,7 @@ export const debugGetPageByUrl = createTool({
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
       console.error(`[ERROR] debug_get_page_by_url: ${errorMsg}`);
-      
+
       return {
         success: false,
         queryResult: null,
