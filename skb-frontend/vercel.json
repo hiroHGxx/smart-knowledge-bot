@@ -1,15 +1,6 @@
 {
-  "name": "smartknowledgebot-frontend",
   "version": 2,
   "framework": "nextjs",
-  "installCommand": "npm install",
-  "buildCommand": "npm run build",
-  "outputDirectory": ".next",
-  "env": {
-    "GOOGLE_GENERATIVE_AI_API_KEY": "@google-ai-api-key",
-    "CONVEX_URL": "@convex-url",
-    "CONVEX_AUTH_TOKEN": "@convex-auth-token"
-  },
   "functions": {
     "src/app/api/chat/route.ts": {
       "maxDuration": 30
