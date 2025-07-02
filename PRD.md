@@ -32,15 +32,17 @@
 ✅ **Phase 3**: エージェント統合・実サイト検証完了
 ✅ **Phase 3.5**: 重複実行問題解決・本格運用検証完了
 ✅ **Phase 3.9**: 品質チェック・デプロイ準備完了
-🔄 **Phase 4**: Next.js統合によるWebアプリ化（75%完了）
+✅ **Phase 4**: Next.js統合によるWebアプリ化（100%完了）
   - ✅ Phase 4.1-4.3: Next.js基盤構築・API統合
   - ✅ Phase 4.4: 質問フォーム・UI実装
   - ✅ Phase 4.5: RAGシステム統合・エンドツーエンドテスト成功
-  - ⏳ Phase 4.6-4.7: 品質向上・Vercelデプロイ
+  - ✅ Phase 4.6: UX改善（ローディング・エラーハンドリング・履歴機能）
+  - ✅ Phase 4.7: Vercelデプロイ・本番動作確認完了
 
 **実証済みサイト**: guide.rolg.maxion.gg（50ページ→386ドキュメント）
 **RAG動作実証**: 「装備強化方法」→5件関連文書→653文字専門回答（9.7秒）
-**Next.js統合**: フロントエンド→API→ベクトル検索→AI回答の完全パイプライン動作確認
+**本番サービス稼働中**: https://smartknowledgebot-frontend-emjn0hmib-hirohgxxs-projects.vercel.app
+**完全パイプライン**: フロントエンド→API→ベクトル検索→AI回答→本番動作確認済み
 
 ## 2. システムアーキテクチャ
 
@@ -603,6 +605,344 @@ answerQuestionFromDocs → 実用サービス
 - **翻訳精度**: ゲーム専門用語辞書
 - **UI改善**: 質問入力・回答表示最適化
 
+### 13.5. 段階的統合・運用改善計画
+
+#### Phase 5: インフラ最適化（推定1-2週間）
+
+**短期改善: Docker化**
+```yaml
+# docker-compose.yml 構成
+services:
+  convex:
+    image: convex-dev
+    command: npx convex dev
+    environment:
+      - CONVEX_URL=${CONVEX_URL}
+      - CONVEX_AUTH_TOKEN=${CONVEX_AUTH_TOKEN}
+
+  mastra:
+    image: node:20
+    working_dir: /app/skb-intelligence
+    command: npx mastra dev --dir src/mastra --env .env
+    environment:
+      - GOOGLE_GENERATIVE_AI_API_KEY=${GOOGLE_GENERATIVE_AI_API_KEY}
+
+  frontend:
+    image: node:20
+    working_dir: /app/skb-frontend
+    command: npm run dev
+    ports:
+      - "3000:3000"
+    depends_on:
+      - convex
+      - mastra
+```
+
+**利点**:
+- ワンコマンド起動: `docker-compose up`
+- 環境統一: 開発・本番環境の一致
+- 依存関係解決: サービス間の起動順序制御
+
+#### Phase 6: フルマネージド化（推定2-4週間）
+
+**長期改善: クラウドネイティブ構成**
+
+1. **データベース層**: Convex本番環境移行
+   - 開発用: `npx convex dev`
+   - 本番用: Convex Production Dashboard
+   - 利点: 自動スケーリング・24時間稼働
+
+2. **AIエージェント層**: Vercel Functions統合
+   ```typescript
+   // /api/mastra-tools/[...tool].ts
+   export default async function handler(req, res) {
+     const toolResult = await mastraTools.execute(req.body);
+     return res.json(toolResult);
+   }
+   ```
+
+3. **フロントエンド層**: Vercel（現在完了済み）
+   - URL短縮: カスタムドメイン設定
+   - CDN: 自動最適化・高速配信
+
+**最終構成**:
+```bash
+# 理想的なワンクリック運用
+Frontend: smartknowledgebot.vercel.app (Vercel)
+API: /api/chat, /api/tools (Vercel Functions)
+Database: Convex Production (自動管理)
+AI: Google AI API (外部サービス)
+
+# 開発者操作
+git push origin main → 自動デプロイ → 本番反映
+```
+
+#### Phase 7: 運用最適化（推定1-2週間）
+
+**URL管理・ブランディング**
+```bash
+# カスタムドメイン設定
+vercel domains add smartknowledgebot.vercel.app
+vercel alias set [current-long-url] smartknowledgebot.vercel.app
+
+# 独自ドメイン（オプション）
+smartknowledgebot.com → Vercel連携
+```
+
+**モニタリング・解析**
+- Vercel Analytics: ユーザー行動解析
+- Convex Dashboard: データベース使用量
+- エラートラッキング: 24時間監視
+
+**スケーラビリティ対応**
+- Vercel: 自動スケーリング（無制限）
+- Convex: 使用量ベース課金
+- Google AI: API制限管理
+
+### 13.6. Post-Production Development Strategy
+
+#### Phase 5A: Code Quality & Refactoring (1-2週間)
+**Branch**: `refactor/phase4-cleanup`
+**優先度**: 最高（本番安定性確保）
+
+1. **TypeScript強化**
+   - any型の排除・適切な型定義
+   - 厳密なnull安全性確保
+   - インターフェース統一
+   ```typescript
+   // 改善例
+   interface SearchResult {
+     id: string;
+     text: string;
+     sourceUrl: string;
+     score: number;
+   }
+   const results: SearchResult[] = searchResults?.value || [];
+   ```
+
+2. **エラーハンドリング統一**
+   - 統一エラー処理クラス
+   - ユーザーフレンドリーメッセージ
+   - ログ管理システム
+   ```typescript
+   class ErrorHandler {
+     static handleAPIError(error: unknown, context: string) {
+       const message = error instanceof Error ? error.message : 'Unknown error';
+       logger.error(`${context}: ${message}`);
+       return this.generateUserFriendlyMessage(error);
+     }
+   }
+   ```
+
+3. **設定管理改善**
+   - 環境別設定ファイル
+   - 動的パラメータ調整
+   - バリデーション強化
+   ```typescript
+   interface AppConfig {
+     crawling: {
+       maxPages: number;
+       maxDepth: number;
+       batchSize: number;
+     };
+     ai: {
+       scoreThreshold: number;
+       maxDocuments: number;
+     };
+   }
+   ```
+
+4. **テスト追加**
+   - API単体テスト
+   - 統合テスト
+   - E2Eテスト（重要機能）
+
+#### Phase 5B: Docker化・開発環境最適化 (3-5日)
+**Branch**: `feature/docker-optimization`
+**優先度**: 高（開発効率向上）
+
+1. **Docker Compose設定**
+   ```yaml
+   # docker-compose.yml
+   version: '3.8'
+   services:
+     convex:
+       image: node:20
+       working_dir: /app/skb-datastore
+       command: npx convex dev
+       environment:
+         - CONVEX_URL=${CONVEX_URL}
+         - CONVEX_AUTH_TOKEN=${CONVEX_AUTH_TOKEN}
+       volumes:
+         - ./skb-datastore:/app/skb-datastore
+         - /app/skb-datastore/node_modules
+
+     mastra:
+       image: node:20
+       working_dir: /app/skb-intelligence
+       command: npx mastra dev --dir src/mastra --env .env
+       environment:
+         - GOOGLE_GENERATIVE_AI_API_KEY=${GOOGLE_GENERATIVE_AI_API_KEY}
+         - CONVEX_URL=${CONVEX_URL}
+         - CONVEX_AUTH_TOKEN=${CONVEX_AUTH_TOKEN}
+       volumes:
+         - ./skb-intelligence:/app/skb-intelligence
+         - /app/skb-intelligence/node_modules
+       ports:
+         - "4111:4111"
+       depends_on:
+         - convex
+
+     frontend:
+       image: node:20
+       working_dir: /app/skb-frontend
+       command: npm run dev
+       environment:
+         - GOOGLE_GENERATIVE_AI_API_KEY=${GOOGLE_GENERATIVE_AI_API_KEY}
+         - CONVEX_URL=${CONVEX_URL}
+         - CONVEX_AUTH_TOKEN=${CONVEX_AUTH_TOKEN}
+       volumes:
+         - ./skb-frontend:/app/skb-frontend
+         - /app/skb-frontend/node_modules
+       ports:
+         - "3000:3000"
+       depends_on:
+         - convex
+         - mastra
+   ```
+
+2. **開発用スクリプト追加**
+   ```json
+   // package.json (root)
+   {
+     "scripts": {
+       "dev": "docker-compose up",
+       "dev:build": "docker-compose up --build",
+       "dev:clean": "docker-compose down -v",
+       "dev:logs": "docker-compose logs -f"
+     }
+   }
+   ```
+
+3. **環境変数管理**
+   ```bash
+   # .env.example (root)
+   GOOGLE_GENERATIVE_AI_API_KEY=your-google-ai-api-key
+   CONVEX_URL=https://your-project.convex.cloud
+   CONVEX_AUTH_TOKEN=your-convex-auth-token
+   ```
+
+4. **利点**
+   - ワンコマンド起動: `npm run dev`
+   - 環境統一: 開発・本番環境の一致
+   - 依存関係解決: サービス間の起動順序制御
+   - 新メンバー対応: 環境構築5分で完了
+
+#### Phase 5C: Large-Scale Workflow Implementation (1-2週間)
+**Branch**: `feature/large-scale-workflow`
+**優先度**: 高（スケーラビリティ向上）
+
+1. **動的ワークフロー生成**
+   ```typescript
+   export function createBatchWorkflow(totalPages: number, batchSize: number) {
+     const batches = Math.ceil(totalPages / batchSize);
+     const steps = [
+       {
+         id: "purge-old-data",
+         tool: "purgeKnowledgeBase"
+       },
+       {
+         id: "crawl-full-site",
+         tool: "webCrawler",
+         params: { maxDepth: 3, MAX_PAGES: totalPages }
+       },
+       ...Array.from({ length: batches }, (_, i) => ({
+         id: `process-batch-${i + 1}`,
+         tool: "processPendingDocuments",
+         params: { batchSize, startIndex: i * batchSize }
+       })),
+       {
+         id: "final-verification",
+         tool: "systemMaintenance"
+       }
+     ];
+
+     return createWorkflow({
+       name: `batch-process-${totalPages}-pages`,
+       steps
+     });
+   }
+   ```
+
+2. **段階的スケーリング**
+   - 小規模テスト: 100ページ、20件ずつ
+   - 中規模運用: 500ページ、50件ずつ
+   - 大規模運用: 2000ページ、100件ずつ
+
+3. **進捗監視・管理**
+   - Mastraプレイグラウンドでリアルタイム監視
+   - エラー復旧機能（部分再実行）
+   - 実行履歴・ログ管理
+
+4. **パフォーマンス最適化**
+   - メモリ使用量監視
+   - API制限対応（レート制限・待機時間）
+   - バッチサイズ動的調整
+
+#### Git Strategy & Development Flow
+
+**ブランチ戦略**:
+```bash
+main                    # 本番稼働中（保護・直接push禁止）
+├── refactor/phase4-cleanup      # Phase 5A: リファクタリング
+├── feature/docker-optimization  # Phase 5B: Docker化
+├── feature/large-scale-workflow # Phase 5C: ワークフロー機能
+├── feature/multi-site-support   # Phase 6: 複数サイト対応
+└── hotfix/*            # 緊急修正
+```
+
+**開発フロー**:
+1. **機能ブランチ作成**: `git checkout -b feature/xxx`
+2. **実装・テスト**: ローカル環境での開発
+3. **PR作成**: コードレビュー・品質チェック
+4. **マージ**: main への統合
+5. **デプロイ**: Vercel自動デプロイ
+6. **動作確認**: 本番環境でのテスト
+
+**品質管理**:
+- **必須**: TypeScript型チェック
+- **必須**: ESLint・Prettier
+- **必須**: Pre-commit hooks（セキュリティチェック）
+- **推奨**: 単体テスト（重要機能）
+- **推奨**: E2Eテスト（RAGパイプライン）
+
+#### 実装優先度
+
+**Phase 5A (最優先)**: リファクタリング
+- **ROI**: 長期保守性・安定性向上
+- **工数**: 1-2週間
+- **リスク**: 低（既存機能への影響最小）
+
+**Phase 5B (高優先)**: Docker化・開発環境最適化
+- **ROI**: 開発効率3倍向上・環境統一
+- **工数**: 3-5日
+- **リスク**: 低（開発環境のみ影響）
+
+**Phase 5C (高優先)**: ワークフロー機能
+- **ROI**: スケーラビリティ・運用効率向上
+- **工数**: 1-2週間
+- **リスク**: 中（新機能追加）
+
+**Phase 6 (中期)**: フルマネージド化
+- **ROI**: 運用コスト削減・可用性向上
+- **工数**: 2-4週間
+- **リスク**: 中（移行時のダウンタイム）
+
+**Phase 7 (長期)**: 運用最適化
+- **ROI**: ブランド価値・ユーザビリティ向上
+- **工数**: 1-2週間
+- **リスク**: 低
+
 ---
 
-*このPRDは2025-06-30時点での完全動作MVPの実装実績を反映しています。Phase 4本番化への準備が整った状態です。*
+*このPRDは2025-07-02時点でのPhase 4完全完了とVercel本番稼働を反映しています。段階的統合によりエンタープライズレベルの運用体制への移行準備が整いました。*
