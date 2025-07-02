@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { ConvexHttpClient } from "convex/browser";
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // Convex接続テスト
     const convexUrl = process.env.CONVEX_URL;
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     const client = new ConvexHttpClient(convexUrl);
 
     // admin:getStats関数を呼び出し
-    const stats = await client.query("admin:getStats", {});
+    const stats = await (client as any).query("admin:getStats", {});
 
     return NextResponse.json({
       success: true,

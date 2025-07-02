@@ -8,7 +8,8 @@ import { GoogleGenerativeAIEmbeddings } from '@langchain/google-genai';
 // シンプルなテスト用system_maintenance相当の機能
 async function getSystemStats(convexUrl: string) {
   const client = new ConvexHttpClient(convexUrl);
-  const stats = await client.query("admin:getStats", {});
+  // Type assertion for the query function
+  const stats = await (client as any).query("admin:getStats", {});
   return stats;
 }
 
@@ -46,7 +47,7 @@ Japanese question: ${question}
 
     // Step 3: ベクトル類似度検索
     const client = new ConvexHttpClient(convexUrl);
-    const searchResults = await client.action('search:searchByEmbedding', {
+    const searchResults = await (client as any).action('search:searchByEmbedding', {
       embedding: questionEmbedding,
       limit: 5,
     });
@@ -55,13 +56,13 @@ Japanese question: ${question}
     console.log(`[DEBUG] RAG: Raw search results:`, results.length);
     if (results.length > 0) {
       console.log(`[DEBUG] RAG: First result score:`, results[0]?.score);
-      console.log(`[DEBUG] RAG: Score range:`, Math.min(...results.map((r: any) => r.score)), 'to', Math.max(...results.map((r: any) => r.score)));
+      console.log(`[DEBUG] RAG: Score range:`, Math.min(...results.map((r: {score: number}) => r.score)), 'to', Math.max(...results.map((r: {score: number}) => r.score)));
     }
 
     // スコア閾値を0.5に下げて試す
     const filteredResults = results
-      .filter((result: any) => result.score >= 0.5)
-      .map((result: any) => ({
+      .filter((result: {score: number}) => result.score >= 0.5)
+      .map((result: {id: string, text: string, sourceUrl: string, score: number}) => ({
         id: result.id,
         text: result.text,
         sourceUrl: result.sourceUrl,
@@ -80,7 +81,7 @@ Japanese question: ${question}
 
     // Step 4: コンテキストを構築して回答生成
     const context = filteredResults
-      .map((result: any, index: number) =>
+      .map((result: {text: string, score: number}, index: number) =>
         `[Document ${index + 1}] (Score: ${result.score.toFixed(3)})\n${result.text}`
       )
       .join('\n\n');
@@ -148,9 +149,8 @@ export async function POST(request: NextRequest) {
       const stats = await getSystemStats(convexUrl);
 
       // Google AIでレスポンス生成
-      const model = google('gemini-1.5-pro-latest', {
-        apiKey: googleApiKey
-      });
+      process.env.GOOGLE_GENERATIVE_AI_API_KEY = googleApiKey;
+      const model = google('gemini-1.5-pro-latest');
 
       const { text } = await generateText({
         model,
@@ -167,9 +167,8 @@ export async function POST(request: NextRequest) {
 
     } else if (action === 'simple_chat') {
       // シンプルなチャット機能
-      const model = google('gemini-1.5-pro-latest', {
-        apiKey: googleApiKey
-      });
+      process.env.GOOGLE_GENERATIVE_AI_API_KEY = googleApiKey;
+      const model = google('gemini-1.5-pro-latest');
 
       const { text } = await generateText({
         model,
