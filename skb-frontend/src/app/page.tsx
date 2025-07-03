@@ -51,11 +51,45 @@ export default function Home() {
     localStorage.removeItem('smartknowledgebot-history');
   };
 
+  const validateInput = (input: string): string | null => {
+    if (!input.trim()) {
+      return "質問を入力してください";
+    }
+
+    if (input.length > 500) {
+      return "質問は500文字以内で入力してください";
+    }
+
+    if (input.length < 3) {
+      return "質問は3文字以上で入力してください";
+    }
+
+    // Check for suspicious patterns
+    const suspiciousPatterns = [
+      /<script/i,
+      /javascript:/i,
+      /on\w+=/i,
+      /eval\(/i,
+      /alert\(/i,
+      /document\./i,
+      /window\./i,
+    ];
+
+    for (const pattern of suspiciousPatterns) {
+      if (pattern.test(input)) {
+        return "不正な文字が含まれています。通常のテキストを入力してください";
+      }
+    }
+
+    return null;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!question.trim()) {
-      setError("質問を入力してください");
+    const validationError = validateInput(question);
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
@@ -117,6 +151,28 @@ export default function Home() {
             </p>
           </header>
 
+          {/* Learning Purpose Disclaimer */}
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6 mb-6">
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                <svg className="h-6 w-6 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2">
+                  学習・実験目的のプロトタイプ
+                </h3>
+                <div className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+                  <p>• 個人の技術学習・研究目的のみで開発されたシステムです</p>
+                  <p>• RAG（Retrieval-Augmented Generation）技術とAI統合の実証実験</p>
+                  <p>• 現在は特定のゲーム攻略サイトのデータを使用しています</p>
+                  <p>• 商用利用を想定しておらず、学習のためのプロトタイプです</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -154,7 +210,12 @@ export default function Home() {
                   value={question}
                   onChange={(e) => setQuestion(e.target.value)}
                   disabled={isSubmitting}
+                  maxLength={500}
+                  minLength={3}
                 />
+                <div className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  {question.length}/500文字
+                </div>
               </div>
 
               {error && (

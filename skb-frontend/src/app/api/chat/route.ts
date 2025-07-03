@@ -5,6 +5,40 @@ import { generateText } from 'ai';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { GoogleGenerativeAIEmbeddings } from '@langchain/google-genai';
 
+// Rate limiting - simple in-memory store for development
+const rateLimitMap = new Map();
+const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
+const RATE_LIMIT_MAX_REQUESTS = 10; // 10 requests per minute
+
+function checkRateLimit(clientId: string): boolean {
+  const now = Date.now();
+  const clientData = rateLimitMap.get(clientId) || { count: 0, resetTime: now + RATE_LIMIT_WINDOW };
+
+  if (now > clientData.resetTime) {
+    clientData.count = 1;
+    clientData.resetTime = now + RATE_LIMIT_WINDOW;
+    rateLimitMap.set(clientId, clientData);
+    return true;
+  }
+
+  if (clientData.count >= RATE_LIMIT_MAX_REQUESTS) {
+    return false;
+  }
+
+  clientData.count++;
+  rateLimitMap.set(clientId, clientData);
+  return true;
+}
+
+// Input sanitization
+function sanitizeInput(input: string): string {
+  return input
+    .replace(/[<>]/g, '') // Remove HTML tags
+    .replace(/javascript:/gi, '') // Remove javascript: protocols
+    .replace(/on\w+=/gi, '') // Remove event handlers
+    .slice(0, 500); // Limit length
+}
+
 // シンプルなテスト用system_maintenance相当の機能
 async function getSystemStats(convexUrl: string) {
   const client = new ConvexHttpClient(convexUrl);
@@ -131,6 +165,30 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { message, action = 'system_check' } = body;
 
+    // Get client IP for rate limiting
+    const clientId = request.headers.get('x-forwarded-for') ||
+                     request.headers.get('x-real-ip') ||
+                     'unknown';
+
+    // Check rate limit
+    if (!checkRateLimit(clientId)) {
+      return NextResponse.json({
+        success: false,
+        error: 'Rate limit exceeded. Please try again later.'
+      }, { status: 429 });
+    }
+
+    // Sanitize input
+    const sanitizedMessage = message ? sanitizeInput(message) : '';
+
+    // Basic validation
+    if (action === 'rag_search' && !sanitizedMessage) {
+      return NextResponse.json({
+        success: false,
+        error: 'Message is required for RAG search'
+      }, { status: 400 });
+    }
+
     // 環境変数確認
     const convexUrl = process.env.CONVEX_URL;
     const googleApiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
@@ -172,26 +230,26 @@ export async function POST(request: NextRequest) {
 
       const { text } = await generateText({
         model,
-        prompt: `ユーザーからの質問: ${message}\n\n簡潔に答えてください。`
+        prompt: `ユーザーからの質問: ${sanitizedMessage}\n\n簡潔に答えてください。`
       });
 
       return NextResponse.json({
         success: true,
         action: 'simple_chat',
-        userMessage: message,
+        userMessage: sanitizedMessage,
         aiResponse: text
       });
 
     } else if (action === 'rag_search') {
       // RAG検索・回答生成
-      console.log('RAG search requested for:', message);
+      console.log('RAG search requested for:', sanitizedMessage);
 
-      const ragResult = await answerQuestionFromDocs(message, convexUrl, googleApiKey);
+      const ragResult = await answerQuestionFromDocs(sanitizedMessage, convexUrl, googleApiKey);
 
       return NextResponse.json({
         success: ragResult.success,
         action: 'rag_search',
-        userMessage: message,
+        userMessage: sanitizedMessage,
         aiResponse: ragResult.answer,
         relevantDocuments: ragResult.relevantDocuments,
         translatedQuestion: ragResult.translatedQuestion,

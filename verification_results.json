@@ -1,0 +1,24 @@
+{
+  "basic_functionality": [
+    {
+      "test_name": "ページロード",
+      "status": "fail",
+      "details": "HTTPエラー: 401",
+      "priority": "critical",
+      "timestamp": "2025-07-02T21:47:36.100624"
+    }
+  ],
+  "error_cases": [],
+  "ui_ux": [],
+  "data_integrity": [],
+  "security": [],
+  "performance": [],
+  "summary": {
+    "total_tests": 1,
+    "passed": 0,
+    "failed": 1,
+    "warnings": 0,
+    "success_rate": "0.0%",
+    "timestamp": "2025-07-02T21:47:36.263273"
+  }
+}
